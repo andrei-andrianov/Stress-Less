@@ -1,0 +1,7 @@
+mindfulness/User.class
+mindfulness/Application.class
+mindfulness/UserNotFoundException.class
+mindfulness/UserRepository.class
+mindfulness/UserController.class
+mindfulness/DBLoader.class
+mindfulness/NoUserIdException.class
