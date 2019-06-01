@@ -1,4 +1,5 @@
 mindfulness/User.class
+mindfulness/Simulation.class
 mindfulness/Application.class
 mindfulness/UserNotFoundException.class
 mindfulness/UserRepository.class

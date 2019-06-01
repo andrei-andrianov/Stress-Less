@@ -13,9 +13,7 @@ public class DBLoader {
     CommandLineRunner initDB(UserRepository repository){
         return args -> {
             log.info("Preloading " + repository.save(new User("default@email.com", "DefaultUser", 99,
-                    "DefaultGender", "DefaultOccupation", "DefaultEthnicity")));
-            log.info("Preloading " + repository.save(new User("test@email.com", "Sasha", 21,
-                    "female", "student", "ukrainian")));
+                    "DefaultGender", "DefaultOccupation", "DefaultEthnicity")));;
         };
     }
 

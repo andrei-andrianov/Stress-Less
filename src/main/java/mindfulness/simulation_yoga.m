@@ -1,15 +1,5 @@
-%clc
-%clear
-
-%close all
 format long
 N=23;
-
-% for i=1:N
-%     for j=1:N
-%                 W(i,j)=input(['W_',num2str(i),'_',num2str(j)]);
-%     end
-% end
 
 
 %    X1     X2     X3     X4    X5    X6      X7    X8    X9   X10   X11   X12   X13   X14   X15   X16   X17    X18     X19    X20    X21    X22     X23    
@@ -204,14 +194,6 @@ end
 
     end
 
-    
-color_array = rand(N, 3);
-figure();
-    for i = 1:N
-        plot(time, STDX(:,i), 'color', color_array(i,:),'lineWidth',3)
-        hold on
-    end
-
 L1 = 'wsee';
 L2 = 'ssee';
 L3 = 'wsc';
@@ -235,17 +217,3 @@ L20 = 'srsmy';
 L21 = 'esmy';
 L22 = 'memlt';
 L23 = 'bsp';
-
-%L = [L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11, L12, L13, L14, L15, L16, L17, L18, L19, L20, L21, L22, L23];
-
-
-% for i=1:N
-%     if i<10
-%     ch(i,1:3)=['X',num2str(i),' '];
-%     else
-%          ch(i,1:4)=['X',num2str(i),' '];
-%     end
-% end
-legend(L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11, L12, L13, L14, L15, L16, L17, L18, L19, L20, L21, L22, L23)
-grid on
-
