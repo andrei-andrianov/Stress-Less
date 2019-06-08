@@ -1,8 +1,12 @@
 mindfulness/User.class
-mindfulness/Simulation.class
-mindfulness/Application.class
+mindfulness/SimulationType.class
 mindfulness/UserNotFoundException.class
 mindfulness/UserRepository.class
+mindfulness/SimulationController.class
+mindfulness/SimulationRepository.class
 mindfulness/UserController.class
 mindfulness/DBLoader.class
 mindfulness/NoUserIdException.class
+mindfulness/Simulation.class
+mindfulness/Application.class
+EngineConsoleDemo.class

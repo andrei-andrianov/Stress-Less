@@ -1,9 +1,13 @@
-/Users/andrei.andrianov/Documents/Code/StressApp/src/main/java/mindfulness/Simulation.java
-/Users/andrei.andrianov/Documents/Code/StressApp/src/main/java/mindfulness/UserNotFoundAdvice.java
+/Users/andrei.andrianov/Documents/Code/StressApp/src/main/java/mindfulness/EngineConsoleDemo.java
+/Users/andrei.andrianov/Documents/Code/StressApp/src/main/java/mindfulness/SimulationType.java
 /Users/andrei.andrianov/Documents/Code/StressApp/src/main/java/mindfulness/DBLoader.java
 /Users/andrei.andrianov/Documents/Code/StressApp/src/main/java/mindfulness/UserRepository.java
+/Users/andrei.andrianov/Documents/Code/StressApp/src/main/java/mindfulness/User.java
+/Users/andrei.andrianov/Documents/Code/StressApp/src/main/java/mindfulness/SimulationRepository.java
+/Users/andrei.andrianov/Documents/Code/StressApp/src/main/java/mindfulness/Simulation.java
+/Users/andrei.andrianov/Documents/Code/StressApp/src/main/java/mindfulness/SimulationController.java
+/Users/andrei.andrianov/Documents/Code/StressApp/src/main/java/mindfulness/UserNotFoundAdvice.java
 /Users/andrei.andrianov/Documents/Code/StressApp/src/main/java/mindfulness/NoUserIdException.java
 /Users/andrei.andrianov/Documents/Code/StressApp/src/main/java/mindfulness/Application.java
-/Users/andrei.andrianov/Documents/Code/StressApp/src/main/java/mindfulness/User.java
 /Users/andrei.andrianov/Documents/Code/StressApp/src/main/java/mindfulness/UserNotFoundException.java
 /Users/andrei.andrianov/Documents/Code/StressApp/src/main/java/mindfulness/UserController.java

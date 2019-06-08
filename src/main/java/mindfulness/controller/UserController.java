@@ -1,5 +1,8 @@
-package mindfulness;
+package mindfulness.controller;
 
+import mindfulness.model.User;
+import mindfulness.exception.UserNotFoundException;
+import mindfulness.repository.UserRepository;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;

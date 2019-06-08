@@ -1,4 +1,4 @@
-/**
+package mindfulness; /**
  * The program provides a sample for Java Engine functions. It creates a matrix and squares the values greater than 5.
  * Copyright 2016 The MathWorks, Inc.
  */
