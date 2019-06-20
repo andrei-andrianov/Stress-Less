@@ -3,27 +3,40 @@ package mindfulness.service;
 import com.mathworks.engine.MatlabEngine;
 import lombok.extern.slf4j.Slf4j;
 import mindfulness.SimulationType;
+import mindfulness.exception.UserNotFoundException;
 import mindfulness.model.Simulation;
-import mindfulness.model.SimulationParameters;
+import mindfulness.model.User;
+import mindfulness.repository.UserRepository;
+import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 @Slf4j
-public abstract class SimulationService {
+@Service
+public class SimulationService {
     private static Future<MatlabEngine> matlabEngineFuture;
 
-    // TODO: implement simulation suggestion based on user preferences
-    public SimulationType suggestSimulation(){
-        return SimulationType.YOGA;
+    private final UserRepository userRepository;
+
+    public SimulationService(UserRepository userRepository){
+        this.userRepository = userRepository;
     }
 
-    public String generateFilename(String userId, SimulationParameters simulationParameters, Timestamp timestamp){
+    public SimulationType suggestSimulation(String userId){
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
+        SimulationType simulationType = Collections.max(user.getPreferences().entrySet(), Map.Entry.comparingByValue()).getKey();
+        return SimulationType.MINDFULNESS;
+    }
+
+    public String generateFilename(String userId, SimulationType simulationType, Timestamp timestamp){
         String filename = new StringBuilder()
                 .append(userId)
                 .append("-")
-                .append(simulationParameters.getParameters().get("type"))
+                .append(simulationType)
                 .append("-")
                 .append(timestamp)
                 .toString();
@@ -41,7 +54,6 @@ public abstract class SimulationService {
             // Get the MATLAB engine object from the future.
             MatlabEngine matlabEngine = matlabEngineFuture.get();
 
-            //TODO: Call function in MATLAB asynchronously.
             matlabEngine.fevalAsync(simulation.getFileName());
             matlabEngine.disconnectAsync();
         } catch (ExecutionException | InterruptedException e){

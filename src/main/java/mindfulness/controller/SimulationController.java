@@ -2,33 +2,34 @@ package mindfulness.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import mindfulness.model.Simulation;
-import mindfulness.model.SimulationParameters;
 import mindfulness.repository.SimulationRepository;
+import mindfulness.repository.UserRepository;
 import mindfulness.service.SimulationService;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Timestamp;
+import java.util.Map;
 
-@RestController
 @Slf4j
-public class SimulationController extends SimulationService{
+@RestController
+public class SimulationController {
     private final SimulationRepository simulationRepository;
+    private final SimulationService simulationService;
 
+    SimulationController(SimulationRepository simulationRepository, UserRepository userRepository){
+        this.simulationRepository = simulationRepository;
+        this.simulationService = new SimulationService(userRepository);
+    }
 
-    SimulationController(SimulationRepository simulationRepository){this.simulationRepository = simulationRepository;}
-
-
-//    TODO: Check if a simulation type is attached to user otherwise call suggestSimulation
-//    TODO: Filename generation
 //    Runs simulation for user with id, reads input initial values from file, saves results to file
     @PostMapping("/runSimulation/{userId}")
-    public Simulation getRunSimulation(@RequestBody SimulationParameters simulationParameters, @PathVariable String userId){
+    public Simulation getRunSimulation(@RequestBody Map<String, Long> simulationParameters, @PathVariable String userId){
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
-        Simulation simulation = new Simulation(userId, timestamp, suggestSimulation(),
-                generateFilename(userId, simulationParameters, timestamp), simulationParameters);
+        Simulation simulation = new Simulation(userId, timestamp, simulationService.suggestSimulation(userId),
+                simulationService.generateFilename(userId, simulationService.suggestSimulation(userId), timestamp), simulationParameters);
 
-        runSimulation(simulation);
+        simulationService.runSimulation(simulation);
 
         return simulationRepository.save(simulation);
     }

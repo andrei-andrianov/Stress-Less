@@ -8,6 +8,7 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import java.sql.Timestamp;
+import java.util.Map;
 
 @Data
 @Entity
@@ -37,10 +38,10 @@ public class Simulation {
     @NotBlank(message = "Simulation filename is blank.")
     private final String fileName;
 
-    private SimulationParameters simulationParameters;
+    private Map<String, Long> simulationParameters;
 
     public Simulation(String userId, Timestamp timestamp, SimulationType simulationType,
-                      String fileName, SimulationParameters simulationParameters){
+                      String fileName, Map<String, Long> simulationParameters){
         this.userId = userId;
         this.timestamp = timestamp;
         this.simulationType = simulationType;

@@ -1,9 +1,8 @@
 package mindfulness.model;
 
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import mindfulness.SimulationType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -12,11 +11,10 @@ import javax.persistence.Table;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import java.util.Map;
 
 @Data
 @Entity
-@AllArgsConstructor
-@RequiredArgsConstructor
 @Table(name = "User")
 public class User {
 
@@ -41,4 +39,19 @@ public class User {
 
     @Column
     private String ethnicity;
+
+    private Map<SimulationType, Long> preferences;
+
+    public User(String id, String name, int age, String gender, String occupation, String ethnicity){
+        this.id = id;
+        this.name = name;
+        this.age = age;
+        this.gender = gender;
+        this.occupation = occupation;
+        this.ethnicity = ethnicity;
+    }
+
+    public User(String id){
+        this.id = id;
+    }
 }

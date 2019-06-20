@@ -1,5 +1,6 @@
 package mindfulness.controller;
 
+import mindfulness.SimulationType;
 import mindfulness.model.User;
 import mindfulness.exception.UserNotFoundException;
 import mindfulness.repository.UserRepository;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 public class UserController {
@@ -53,5 +55,14 @@ public class UserController {
                     newUser.setId(id);
                     return userRepository.save(newUser);
                 });
+    }
+//    set simulation preferences for a user with id
+    @PutMapping("/userPreferences/{id}")
+    public User putUserPreferences(@RequestBody Map<SimulationType, Long> simulationPreferences, @PathVariable String id){
+        return userRepository.findById(id)
+                .map(user -> {
+                    user.setPreferences(simulationPreferences);
+                    return userRepository.save(user);
+                }).orElseThrow(() -> new UserNotFoundException(id));
     }
 }

@@ -1,4 +1,4 @@
-package mindfulness;
+package mindfulness.service;
 
 import lombok.extern.slf4j.Slf4j;
 import mindfulness.model.User;
@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @Slf4j
-public class DBLoader {
+public class DBLoaderService {
 
     @Bean
     CommandLineRunner initDB(UserRepository repository){
