@@ -2,15 +2,15 @@ package mindfulness.service;
 
 import com.mathworks.engine.MatlabEngine;
 import lombok.extern.slf4j.Slf4j;
-import mindfulness.SimulationType;
 import mindfulness.exception.UserNotFoundException;
+import mindfulness.model.SimulationType;
 import mindfulness.model.Simulation;
 import mindfulness.model.User;
 import mindfulness.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
-import java.sql.Timestamp;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -28,17 +28,24 @@ public class SimulationService {
 
     public SimulationType suggestSimulation(String userId){
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
-        SimulationType simulationType = Collections.max(user.getPreferences().entrySet(), Map.Entry.comparingByValue()).getKey();
+
+        Map<SimulationType, Long> userPreferences = new HashMap<>();
+        userPreferences.put(SimulationType.MINDFULNESS, user.getMindfulness());
+        userPreferences.put(SimulationType.HUMOUR, user.getHumour());
+        userPreferences.put(SimulationType.MUSIC, user.getMusic());
+
+        SimulationType simulationType = Collections.max(userPreferences.entrySet(), Map.Entry.comparingByValue()).getKey();
+//        TODO debugging
         return SimulationType.MINDFULNESS;
     }
 
-    public String generateFilename(String userId, SimulationType simulationType, Timestamp timestamp){
+    public String generateFilename(Simulation simulation){
         String filename = new StringBuilder()
-                .append(userId)
+                .append(simulation.getUser().getId())
                 .append("-")
-                .append(simulationType)
+                .append(simulation.getSimulationType())
                 .append("-")
-                .append(timestamp)
+                .append(simulation.getTimestamp())
                 .toString();
         return filename;
     }
