@@ -17,6 +17,7 @@ public class UserController {
         this.userRepository = userRepository;
     }
 
+//    TODO fix userInfo update with this function
 //    Save new user info
     @PostMapping("/userInfo")
     public User postUserInfo(@Valid @RequestBody User newUser) {
@@ -53,15 +54,30 @@ public class UserController {
 
 //    Set simulation preferences for a user with {id}
     @PutMapping("/userPreferences/{id}")
-    public User putUserPreferences(@RequestBody User newUser, @PathVariable String id) {
+    public User putUserPreferences(@RequestBody User userPreferences, @PathVariable String id) {
 
         return userRepository.findById(id)
                 .map(user -> {
-                    user.setMindfulness(newUser.getMindfulness());
-                    user.setHumour(newUser.getHumour());
-                    user.setMusic(newUser.getMusic());
+                    user.setMindfulness(userPreferences.getMindfulness());
+                    user.setHumour(userPreferences.getHumour());
+                    user.setMusic(userPreferences.getMusic());
                     return userRepository.save(user);
                 })
                 .orElseThrow(() -> new UserNotFoundException(id));
+    }
+
+//    Set simulation parameters for a user with {userId}
+    @PutMapping("/simulationParameters/{userId}")
+    public User putSimulationParameters(@RequestBody User userParameters, @PathVariable String userId) {
+
+        return userRepository.findById(userId)
+                .map(user -> {
+                    user.setStressEvent(userParameters.getStressEvent());
+                    user.setStressLevel(userParameters.getStressLevel());
+                    user.setPositiveBelief(userParameters.getPositiveBelief());
+                    user.setNegativeBelief(userParameters.getNegativeBelief());
+                    return userRepository.save(user);
+                })
+                .orElseThrow(() -> new UserNotFoundException(userId));
     }
 }

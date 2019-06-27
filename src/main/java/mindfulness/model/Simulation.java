@@ -19,10 +19,4 @@ public class Simulation {
     private Timestamp timestamp;
     private SimulationType simulationType;
     private String fileName;
-
-//    initial values for parameters
-    private Long stressEvent;
-    private Long stressLevel;
-    private Long positiveBelief;
-    private Long negativeBelief;
 }

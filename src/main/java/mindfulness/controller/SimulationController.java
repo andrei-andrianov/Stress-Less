@@ -7,7 +7,9 @@ import mindfulness.model.User;
 import mindfulness.repository.SimulationRepository;
 import mindfulness.repository.UserRepository;
 import mindfulness.service.SimulationService;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.Timestamp;
 
@@ -24,7 +26,7 @@ public class SimulationController {
         this.simulationService = new SimulationService(this.userRepository);
     }
 
-//    Runs simulation for user with {id}
+//    Runs simulation for user with {userId}
     @GetMapping("/runSimulation/{userId}")
     public Simulation getRunSimulation(@PathVariable String userId){
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
@@ -39,18 +41,4 @@ public class SimulationController {
 
         return simulationRepository.save(simulation);
     }
-
-//    Set simulation preferences for a user with {id}
-    @PutMapping("/simulationParameters/{id}")
-    public User putSimulationParameters(@PathVariable String userId) {
-        User newUser = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
-
-        return userRepository.findById(userId)
-                .map(user -> {
-                    user.setMindfulness(newUser.getMindfulness());
-                    user.setHumour(newUser.getHumour());
-                    user.setMusic(newUser.getMusic());
-                    return userRepository.save(user);
-                })
-                .orElseThrow(() -> new UserNotFoundException(userId));
-    }}
+}

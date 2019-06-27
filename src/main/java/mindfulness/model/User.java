@@ -18,12 +18,22 @@ public class User {
     @Email(message = "Invalid email type for user id.")
     @Id
     private String id;
+    private Long simulationId;
 
+//    user info
     private String name;
-    private int age;
+    private Integer age;
     private String gender;
     private String occupation;
-    private Long mindfulness;
-    private Long humour;
-    private Long music;
+
+//    simulation preferences
+    private Float mindfulness;
+    private Float humour;
+    private Float music;
+
+//    initial values for parameters
+    private Float stressEvent;
+    private Float stressLevel;
+    private Float positiveBelief;
+    private Float negativeBelief;
 }

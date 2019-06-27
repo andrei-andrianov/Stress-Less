@@ -29,13 +29,13 @@ public class SimulationService {
     public SimulationType suggestSimulation(String userId){
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
 
-        Map<SimulationType, Long> userPreferences = new HashMap<>();
+        Map<SimulationType, Float> userPreferences = new HashMap<>();
         userPreferences.put(SimulationType.MINDFULNESS, user.getMindfulness());
         userPreferences.put(SimulationType.HUMOUR, user.getHumour());
         userPreferences.put(SimulationType.MUSIC, user.getMusic());
 
         SimulationType simulationType = Collections.max(userPreferences.entrySet(), Map.Entry.comparingByValue()).getKey();
-//        TODO debugging
+
         return SimulationType.MINDFULNESS;
     }
 

@@ -1,6 +1,9 @@
 # ignore OS X folder attributes file
 .DS_Store
 
+# ignore database file
+data.mv.db
+
 # Created by https://www.gitignore.io/api/java,intellij
 
 ### Intellij ###
