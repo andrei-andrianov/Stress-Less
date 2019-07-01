@@ -106,13 +106,14 @@ hebb(20,23)=0.7;
 mu(20,23)=0.98;
 
 dt=1;
-time=0:dt:7000;
+time=0:dt:4000;
 L=length(time);
 STDX=zeros(L,N);
+
 % initial values
-STDX(1,3)=1;% wsc
-STDX(1,10)=0.01;% goal
-STDX(1,15)=0.05;
+STDX(1,3)=1; % wsc
+STDX(1,10)=0.01; % goal
+STDX(1,15)=0.05; %
 STDX(1,18)=0.05;
 
 k=0;

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -40,5 +41,11 @@ public class SimulationController {
         simulationService.runSimulation(simulation);
 
         return simulationRepository.save(simulation);
+    }
+
+//    Return stress level for the last 14 days
+    @GetMapping("/stressLevel/{userId}")
+    public List<Float> getStressLevel(@PathVariable String userId){
+        return simulationService.getStressLevel(userId);
     }
 }
