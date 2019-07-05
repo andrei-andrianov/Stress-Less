@@ -103,9 +103,7 @@ hebb(20,23)=0.7;
 mu(20,23)=0.98;
 
 %user parameters
-wsc = 0.95; % .95-1
-bsp = 0.6; %.05-.6
-% esee = 0.9;
+wsc = 0.95;
 
 dt=1;
 time=0:dt:7000;
@@ -113,12 +111,12 @@ L=length(time);
 STDX=zeros(L,N);
 
 % initial values
-STDX(1,3)=wsc;% ws c
+STDX(1,3)=0.95;% ws c .95-1
 STDX(1,10)=0.01;% goal
-STDX(1,15)=bsp;% mem e
-STDX(1,18)=bsp;% mem w
-STDX(1,23)=bsp;% bs p
-% STDX(1,9)=esee;% es ee
+STDX(1,15)=0.6;% mem e .05-.6
+STDX(1,18)=0.6;% mem w .05-.6
+STDX(1,23)=0.6;% bs p .05-.6
+% STDX(1,9)=0.9;% es ee
 
 k=0;
 for i=1:N
@@ -235,8 +233,8 @@ varNames = {L1,L2,L3,L4,L5,L6,L7,L8,L9,L10,L11,L12,L13,L14,L15,L16,L17,L18,L19,L
 color_array = rand(N, 3);
 figure();
 for i = 1:N
-    plot(time, STDX(:,i), 'color', color_array(i,:),'lineWidth',3)
-    hold on
+plot(time, STDX(:,i), 'color', color_array(i,:),'lineWidth',3)
+hold on
 end
 
 legend(varNames)

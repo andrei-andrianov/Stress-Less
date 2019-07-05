@@ -31,6 +31,7 @@ public class SimulationService {
         this.userRepository = userRepository;
     }
 
+//    TODO fix null pointer
     public SimulationType suggestSimulation(String userId){
         log.debug("Suggesting a simulation type..");
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
@@ -40,7 +41,7 @@ public class SimulationService {
         userPreferences.put(SimulationType.HUMOUR, user.getHumour());
         userPreferences.put(SimulationType.MUSIC, user.getMusic());
 
-        SimulationType simulationType = Collections.max(userPreferences.entrySet(), Map.Entry.comparingByValue()).getKey();
+//        SimulationType simulationType = Collections.max(userPreferences.entrySet(), Map.Entry.comparingByValue()).getKey();
 
         return SimulationType.MINDFULNESS;
     }
@@ -49,9 +50,9 @@ public class SimulationService {
         log.debug("Generating simulation filename..");
         String filename = new StringBuilder()
                 .append(simulation.getUser().getId())
-                .append("-")
+                .append("_")
                 .append(simulation.getSimulationType())
-                .append("-")
+                .append("_")
                 .append(simulation.getTimestamp())
                 .toString();
         return filename;
@@ -76,6 +77,7 @@ public class SimulationService {
             switch (simulation.getSimulationType()){
                 case MINDFULNESS:
                     log.debug("Starting mindfulness simulation..");
+//                    TODO Get from resources folder
                     simulationFuture = matlabEngine.evalAsync(new String(
                             Files.readAllBytes(Paths.get("simulation_mindfulness.m")), StandardCharsets.UTF_8));
                     break;
@@ -90,7 +92,7 @@ public class SimulationService {
             }
 
             if (simulationFuture.isDone())
-                log.debug("Simulation has been finished, disconnecting MATLAB..");
+                log.debug("Simulation run has been finished, disconnecting MATLAB..");
                 matlabEngine.disconnectAsync();
 
         } catch (ExecutionException | InterruptedException | IOException e){
@@ -101,17 +103,22 @@ public class SimulationService {
     public void saveParameters(Simulation simulation){
         log.debug("Saving simulation parameters to file..");
         List<Float> simulationParameters = new ArrayList<>();
-        simulationParameters.add(simulation.getUser().getStressEvent());
-        simulationParameters.add(simulation.getUser().getStressLevel());
-        simulationParameters.add(simulation.getUser().getPositiveBelief());
-        simulationParameters.add(simulation.getUser().getNegativeBelief());
+        simulationParameters.add(
+                simulation.getUser().getStressEvent() != null ? simulation.getUser().getStressEvent() : 0);
+        simulationParameters.add(
+                simulation.getUser().getStressLevel() != null ? simulation.getUser().getStressLevel() : 0);
+        simulationParameters.add(
+                simulation.getUser().getPositiveBelief() != null ? simulation.getUser().getPositiveBelief() : 0);
+        simulationParameters.add(
+                simulation.getUser().getNegativeBelief() != null ? simulation.getUser().getNegativeBelief() : 0);
 
         String simulationParametersString = simulationParameters.stream()
                 .map(i -> i.toString())
                 .collect(Collectors.joining(","));
 
-//        file with global settings for a simulation run
-//        local file needed just to store parameters
+//        File with global settings for a simulation run
+//        Local file needed just to store parameters
+//        TODO Save to resources folder?
         File simulationParametersFileGlobal = new File("params.csv");
         File simulationParametersFileLocal = new File(simulation.getFileName() + "_params.csv");
 
@@ -131,8 +138,12 @@ public class SimulationService {
 
 //    TODO implement fetching stress level for the past 14 days
     public List<Float> getStressLevel(String userId){
-        List<Float> stressLevel = new ArrayList<>();
+        log.debug("Getting stress level for the last 14 days..");
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
 
+        user.setGender("transformer");
+
+        List<Float> stressLevel = new ArrayList<>();
         for (int i = 1; i < 15; i++)
             stressLevel.add((float)i);
 

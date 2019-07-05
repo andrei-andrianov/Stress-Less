@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -47,5 +48,11 @@ public class SimulationController {
     @GetMapping("/stressLevel/{userId}")
     public List<Float> getStressLevel(@PathVariable String userId){
         return simulationService.getStressLevel(userId);
+    }
+
+//    TODO Get simulation result (show stress graph)
+    @GetMapping("/simulationResults/{userId}")
+    public List<Float> getSimulationResult(@PathVariable String userId){
+        return new ArrayList<>();
     }
 }

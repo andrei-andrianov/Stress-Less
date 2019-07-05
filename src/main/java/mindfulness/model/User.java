@@ -18,7 +18,6 @@ public class User {
     @Email(message = "Invalid email type for user id.")
     @Id
     private String id;
-    private Long simulationId;
 
 //    user info
     private String name;
