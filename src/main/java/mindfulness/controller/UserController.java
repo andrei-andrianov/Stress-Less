@@ -21,7 +21,12 @@ public class UserController {
 //    Save new user info
     @PostMapping("/userInfo")
     public User postUserInfo(@Valid @RequestBody User newUser) {
-        return userRepository.save(newUser);
+        User user = userRepository.findById(newUser.getId()).orElseThrow(() -> new UserNotFoundException(newUser.getId()));
+
+        if (user == null)
+            return userRepository.save(newUser);
+        else return new User();
+
     }
 
 //    Get info for all users available
@@ -38,16 +43,16 @@ public class UserController {
 
 //    Update the info of a user
 //    This does not update user {id}
-//    TODO Check if this sets not specified variables to null
     @PutMapping("/userInfo/{id}")
     public User putUserInfo(@RequestBody User newUser, @PathVariable String id) {
 
         return userRepository.findById(id)
                 .map(user -> {
-                    user.setName(newUser.getName());
-                    user.setAge(newUser.getAge());
-                    user.setGender(newUser.getGender());
-                    user.setOccupation(newUser.getOccupation());
+                    user.setName(newUser.getName() != null ? newUser.getName() : user.getName());
+                    user.setAge(newUser.getAge() != null ? newUser.getAge() : user.getAge());
+                    user.setGender(newUser.getGender() != null ? newUser.getGender() : user.getGender());
+                    user.setOccupation(newUser.getOccupation() != null ?
+                            newUser.getOccupation() : user.getOccupation());
                     return userRepository.save(user);
                 })
                 .orElseThrow(() -> new UserNotFoundException(id));
@@ -57,13 +62,14 @@ public class UserController {
     @PutMapping("/userPreferences/{id}")
     public User putUserPreferences(@RequestBody User userPreferences, @PathVariable String id) {
 
-//        If a user doesnt have some preference set it to 0 instead of null
         return userRepository.findById(id)
                 .map(user -> {
-                    user.setMindfulness(
-                            userPreferences.getMindfulness() != null ? userPreferences.getMindfulness() : 0);
-                    user.setHumour(userPreferences.getHumour() != null ? userPreferences.getHumour() : 0);
-                    user.setMusic(userPreferences.getMusic() != null ? userPreferences.getMusic() : 0);
+                    user.setMindfulness(userPreferences.getMindfulness() != null ?
+                            userPreferences.getMindfulness() : user.getMindfulness());
+                    user.setHumour(userPreferences.getHumour() != null ?
+                            userPreferences.getHumour() : user.getHumour());
+                    user.setMusic(userPreferences.getMusic() != null ?
+                            userPreferences.getMusic() : user.getMusic());
                     return userRepository.save(user);
                 })
                 .orElseThrow(() -> new UserNotFoundException(id));
@@ -73,15 +79,16 @@ public class UserController {
     @PutMapping("/simulationParameters/{userId}")
     public User putSimulationParameters(@RequestBody User userParameters, @PathVariable String userId) {
 
-//        If a user doesnt have some parameter set it to 0 instead of null
         return userRepository.findById(userId)
                 .map(user -> {
-                    user.setStressEvent(userParameters.getStressEvent() != null ? userParameters.getStressEvent() : 0);
-                    user.setStressLevel(userParameters.getStressLevel() != null ? userParameters.getStressLevel() : 0);
-                    user.setPositiveBelief(
-                            userParameters.getPositiveBelief() != null ? userParameters.getPositiveBelief() : 0);
-                    user.setNegativeBelief(
-                            userParameters.getNegativeBelief() != null ? userParameters.getNegativeBelief() : 0);
+                    user.setStressEvent(userParameters.getStressEvent() != null ?
+                            userParameters.getStressEvent() : user.getStressEvent());
+                    user.setStressLevel(userParameters.getStressLevel() != null ?
+                            userParameters.getStressLevel() : user.getStressLevel());
+                    user.setPositiveBelief(userParameters.getPositiveBelief() != null ?
+                            userParameters.getPositiveBelief() : user.getPositiveBelief());
+                    user.setNegativeBelief(userParameters.getNegativeBelief() != null ?
+                            userParameters.getNegativeBelief() : user.getNegativeBelief());
                     return userRepository.save(user);
                 })
                 .orElseThrow(() -> new UserNotFoundException(userId));
