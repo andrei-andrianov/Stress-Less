@@ -78,8 +78,6 @@ public class SimulationService {
                     log.debug("Running mindfulness simulation..");
                     simulationFuture = matlabEngine.evalAsync(new String(
                             Files.readAllBytes(Paths.get("simulation/simulation_mindfulness.m")), StandardCharsets.UTF_8));
-//                    Future<String> futureTest = matlabEngine.getVariableAsync("result_path");
-//                    log.debug("GOT VARIABLE FROM MATLAB: " + futureTest.get());
                     break;
                 case HUMOUR:
                     log.debug("Running humour simulation..");
@@ -102,7 +100,7 @@ public class SimulationService {
         }
     }
 
-    public void saveParameters(Simulation simulation){
+    private void saveParameters(Simulation simulation){
         log.debug("Saving simulation parameters to file..");
         List<Float> simulationParameters = new ArrayList<>();
         simulationParameters.add(
