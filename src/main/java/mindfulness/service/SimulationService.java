@@ -10,11 +10,11 @@ import mindfulness.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -50,7 +50,7 @@ public class SimulationService {
                 .append("_")
                 .append(simulation.getSimulationType())
                 .append("_")
-                .append(simulation.getTimestamp())
+                .append(simulation.getTimestamp().getTime())
                 .toString();
         return filename;
     }
@@ -71,19 +71,22 @@ public class SimulationService {
 
             Future<Void> simulationFuture = new CompletableFuture<>();
 
+            matlabEngine.putVariableAsync("filename", simulation.getFileName().toCharArray());
+
             switch (simulation.getSimulationType()){
                 case MINDFULNESS:
-                    log.debug("Starting mindfulness simulation..");
+                    log.debug("Running mindfulness simulation..");
                     simulationFuture = matlabEngine.evalAsync(new String(
-                            Files.readAllBytes(Paths.get(ClassLoader.getSystemResource(
-                                    "simulation_mindfulness.m").toURI())), StandardCharsets.UTF_8));
+                            Files.readAllBytes(Paths.get("simulation/simulation_mindfulness.m")), StandardCharsets.UTF_8));
+//                    Future<String> futureTest = matlabEngine.getVariableAsync("result_path");
+//                    log.debug("GOT VARIABLE FROM MATLAB: " + futureTest.get());
                     break;
                 case HUMOUR:
-                    log.debug("Starting humour simulation..");
+                    log.debug("Running humour simulation..");
                     simulationFuture = matlabEngine.evalAsync("humour script");
                     break;
                 case MUSIC:
-                    log.debug("Starting music simulation..");
+                    log.debug("Running music simulation..");
                     simulationFuture = matlabEngine.evalAsync("music script");
                     break;
             }
@@ -94,7 +97,7 @@ public class SimulationService {
                 matlabEngine.disconnectAsync();
             }
 
-        } catch (ExecutionException | InterruptedException | IOException | URISyntaxException e){
+        } catch (ExecutionException | InterruptedException | IOException e){
             log.error("Runtime error while starting a simulation", e);
         }
     }
@@ -112,17 +115,22 @@ public class SimulationService {
                 simulation.getUser().getNegativeBelief() != null ? simulation.getUser().getNegativeBelief() : 0);
 
         String simulationParametersString = simulationParameters.stream()
-                .map(i -> i.toString())
+                .map(Object::toString)
                 .collect(Collectors.joining(","));
 
 //        File with global settings for a simulation run
 //        Local file needed just to store parameters
-        Path simulationParametersFileGlobal = Paths.get("data/params.csv");
-        Path simulationParametersFileLocal = Paths.get("data/" + simulation.getFileName() + "_params.csv");
+        Path simulationParametersFileGlobal = Paths.get("simulation/params.csv");
+        Path simulationParametersFileLocal = Paths.get("simulation/data/" + simulation.getFileName() + "_params.csv");
+
+        String simulationParametersHeader = "stressEvent,stressLevel,positiveBelief,negativeBelief\n";
 
         try{
-            Files.write(simulationParametersFileGlobal, simulationParametersString.getBytes());
-            Files.write(simulationParametersFileLocal, simulationParametersString.getBytes());
+            Files.write(simulationParametersFileGlobal, simulationParametersHeader.getBytes());
+            Files.write(simulationParametersFileGlobal, simulationParametersString.getBytes(), StandardOpenOption.APPEND);
+
+            Files.write(simulationParametersFileLocal, simulationParametersHeader.getBytes());
+            Files.write(simulationParametersFileLocal, simulationParametersString.getBytes(), StandardOpenOption.APPEND);
         } catch (IOException e){
             log.error("Error occurred while saving simulation parameters", e);
         }

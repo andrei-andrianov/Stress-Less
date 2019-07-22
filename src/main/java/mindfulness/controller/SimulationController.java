@@ -50,9 +50,4 @@ public class SimulationController {
         return simulationService.getStressLevel(userId);
     }
 
-//    TODO Get simulation result (show stress graph)
-    @GetMapping("/simulationResults/{userId}")
-    public List<Float> getSimulationResult(@PathVariable String userId){
-        return new ArrayList<>();
-    }
 }

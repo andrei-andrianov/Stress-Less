@@ -102,10 +102,14 @@ eta(20,23)=0.5;
 hebb(20,23)=0.7;
 mu(20,23)=0.98;
 
+%path to current file
+path = strcat(cd, '/simulation/params.csv');
+
 %user parameters
-wsc = 0.95; % .95-1
-bsp = 0.6; %.05-.6
-% esee = 0.9;
+params = readtable(path);
+wsc = params.stressEvent; % .95-1
+bsp = params.positiveBelief; %.05-.6
+% esee = params.stressLevel;
 
 dt=1;
 time=0:dt:7000;
@@ -232,18 +236,21 @@ L23 = 'bsp';
 
 varNames = {L1,L2,L3,L4,L5,L6,L7,L8,L9,L10,L11,L12,L13,L14,L15,L16,L17,L18,L19,L20,L21,L22,L23};
 
-color_array = rand(N, 3);
-figure();
-for i = 1:N
-    plot(time, STDX(:,i), 'color', color_array(i,:),'lineWidth',3)
-    hold on
-end
+% color_array = rand(N, 3);
+% figure();
+% for i = 1:N
+%     plot(time, STDX(:,i), 'color', color_array(i,:),'lineWidth',3)
+%     hold on
+% end
 
-legend(varNames)
-grid on
+% legend(varNames)
+% grid on
 
-% result = table(STDX);
-% writetable(result, 'format.csv', 'delimiter', ',', 'precision', 6);
-% result = readtable('format.csv');
-% result.Properties.VariableNames = varNames;
-% writetable(result, 'result.csv', 'delimiter', ',');
+path = strcat(cd, '/simulation/format.csv');
+delete(path);
+result = table(STDX);
+writetable(result, path, 'delimiter', ',');
+result = readtable(path);
+result.Properties.VariableNames = varNames;
+path = strcat(cd, '/simulation/data/', filename, '_results.csv');
+writetable(result, path, 'delimiter', ',');
