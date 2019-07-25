@@ -1,5 +1,6 @@
 package mindfulness.controller;
 
+import mindfulness.exception.UserAlreadyExistsException;
 import mindfulness.model.User;
 import mindfulness.exception.UserNotFoundException;
 import mindfulness.repository.UserRepository;
@@ -17,16 +18,13 @@ public class UserController {
         this.userRepository = userRepository;
     }
 
-//    TODO Fix userInfo update with this function
 //    Save new user info
     @PostMapping("/userInfo")
     public User postUserInfo(@Valid @RequestBody User newUser) {
-        User user = userRepository.findById(newUser.getId()).orElseThrow(() -> new UserNotFoundException(newUser.getId()));
-
-        if (user == null)
+        if (userRepository.existsById(newUser.getId()))
+            throw new UserAlreadyExistsException(newUser.getId());
+        else
             return userRepository.save(newUser);
-        else return new User();
-
     }
 
 //    Get info for all users available

@@ -35,12 +35,20 @@ public class SimulationService {
         log.debug("Suggesting a simulation type..");
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
 
-        Map<SimulationType, Float> userPreferences = new HashMap<>();
+        Map<SimulationType, Float> userPreferences = new TreeMap<>();
         userPreferences.put(SimulationType.MINDFULNESS, user.getMindfulness() != null ? user.getMindfulness() : 0);
         userPreferences.put(SimulationType.HUMOUR, user.getHumour() != null ? user.getHumour() : 0);
         userPreferences.put(SimulationType.MUSIC, user.getMusic() != null ? user.getMusic() : 0);
 
-        return Collections.max(userPreferences.entrySet(), Map.Entry.comparingByValue()).getKey();
+        userPreferences = userPreferences.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                        (e1, e2) -> e1, LinkedHashMap::new));
+
+        SimulationType suggestedSimulation = Collections.max(
+                userPreferences.entrySet(), Map.Entry.comparingByValue()).getKey();
+
+        return suggestedSimulation;
     }
 
     public String generateFilename(Simulation simulation){
