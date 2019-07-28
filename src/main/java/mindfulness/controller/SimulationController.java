@@ -3,6 +3,7 @@ package mindfulness.controller;
 import lombok.extern.slf4j.Slf4j;
 import mindfulness.exception.UserNotFoundException;
 import mindfulness.model.Simulation;
+import mindfulness.model.SimulationType;
 import mindfulness.model.User;
 import mindfulness.repository.SimulationRepository;
 import mindfulness.repository.UserRepository;
@@ -24,7 +25,7 @@ public class SimulationController {
     SimulationController(SimulationRepository simulationRepository, UserRepository userRepository){
         this.simulationRepository = simulationRepository;
         this.userRepository = userRepository;
-        this.simulationService = new SimulationService(this.userRepository);
+        this.simulationService = new SimulationService(this.userRepository, this.simulationRepository);
     }
 
 //    Runs simulation for user with {userId}
@@ -38,12 +39,17 @@ public class SimulationController {
         simulation.setSimulationType(simulationService.suggestSimulation(userId));
         simulation.setFileName(simulationService.generateFilename(simulation));
 
-        simulationService.runSimulation(simulation);
+//        simulationService.runSimulation(simulation);
 
-        return simulationRepository.save(simulation);
+//        return simulationRepository.save(simulation);
+        return new Simulation();
     }
 
-//    Return stress level for the last 14 days
+    @GetMapping("/suggestSimulation/{userId}")
+    public SimulationType getSuggestSimulation(@PathVariable String userId){
+        return simulationService.suggestSimulation(userId);
+    }
+
     @GetMapping("/stressLevel/{userId}")
     public List<Float> getStressLevel(@PathVariable String userId){
         return simulationService.getStressLevel(userId);

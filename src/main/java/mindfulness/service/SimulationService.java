@@ -1,14 +1,17 @@
 package mindfulness.service;
 
 import com.mathworks.engine.MatlabEngine;
+import com.opencsv.CSVReader;
 import lombok.extern.slf4j.Slf4j;
 import mindfulness.exception.UserNotFoundException;
 import mindfulness.model.SimulationType;
 import mindfulness.model.Simulation;
 import mindfulness.model.User;
+import mindfulness.repository.SimulationRepository;
 import mindfulness.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -26,27 +29,94 @@ import java.util.stream.Collectors;
 public class SimulationService {
 
     private final UserRepository userRepository;
+    private final SimulationRepository simulationRepository;
 
-    public SimulationService(UserRepository userRepository){
+    public SimulationService(UserRepository userRepository, SimulationRepository simulationRepository)
+    {
         this.userRepository = userRepository;
+        this.simulationRepository = simulationRepository;
     }
 
     public SimulationType suggestSimulation(String userId){
         log.debug("Suggesting a simulation type..");
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
+        SimulationType suggestedSimulation;
 
-        Map<SimulationType, Float> userPreferences = new TreeMap<>();
+//        Map to store user preferences
+        Map<SimulationType, Float> userPreferences = new LinkedHashMap<>();
         userPreferences.put(SimulationType.MINDFULNESS, user.getMindfulness() != null ? user.getMindfulness() : 0);
         userPreferences.put(SimulationType.HUMOUR, user.getHumour() != null ? user.getHumour() : 0);
         userPreferences.put(SimulationType.MUSIC, user.getMusic() != null ? user.getMusic() : 0);
 
+//        Sort user preferences
         userPreferences = userPreferences.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue())
+                .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
                         (e1, e2) -> e1, LinkedHashMap::new));
 
-        SimulationType suggestedSimulation = Collections.max(
-                userPreferences.entrySet(), Map.Entry.comparingByValue()).getKey();
+//        Get list of simulations for a user
+        List<Simulation> simulationList = simulationRepository.findByUserId(userId);
+
+        if (!(simulationList.size() < 5)){
+//        Sort simulations by time
+            simulationList.sort((s1, s2) -> {
+                if (s1.getTimestamp() == s2.getTimestamp())
+                    return 0;
+                return s1.getTimestamp().getTime() > s2.getTimestamp().getTime() ? -1 : 1;
+            });
+
+//        Leave only 5 most recent simulations
+            simulationList = simulationList.stream()
+                    .limit(5)
+                    .collect(Collectors.toList());
+
+            List<Map<SimulationType, Float>> simulationParams = new ArrayList<>();
+
+//            Read simulation results from file
+            for (Simulation simulation : simulationList) {
+                List<List<String>> simulationParamsFileList = new ArrayList<>();
+
+                try (CSVReader csvReader = new CSVReader(
+                        new FileReader("simulation/data/" + simulation.getFileName() + "_params.csv"))) {
+
+                    String[] values;
+                    while ((values = csvReader.readNext()) != null)
+                        simulationParamsFileList.add(Arrays.asList(values));
+
+                    Map<SimulationType, Float> singleSimulationParams = new LinkedHashMap<>();
+                    singleSimulationParams.put(simulation.getSimulationType(),
+                            Float.parseFloat(simulationParamsFileList.get(1).get(1)));
+
+                    simulationParams.add(singleSimulationParams);
+                } catch (IOException e) {
+                    log.error("Could not read simulation results file", e);
+                }
+            }
+
+//            Simulation params to compare
+            Map<SimulationType, Float> firstSimulationParams = simulationParams.get(0);
+            Map<SimulationType, Float> lastSimulationParams = simulationParams.get(4);
+
+//            Check if the stress level has decreased
+            if (lastSimulationParams.entrySet().iterator().next().getValue() >=
+                    firstSimulationParams.entrySet().iterator().next().getValue())
+//                If the stress level has not decreased and the simulation type has not changed,
+//                                suggest different simulation type
+                if (lastSimulationParams.entrySet().iterator().next().getKey() ==
+                        firstSimulationParams.entrySet().iterator().next().getKey()){
+                    SimulationType currentSimulationType = lastSimulationParams.entrySet().iterator().next().getKey();
+
+                    userPreferences.remove(currentSimulationType);
+                    suggestedSimulation = userPreferences.entrySet().iterator().next().getKey();
+                } else {
+                    suggestedSimulation = lastSimulationParams.entrySet().iterator().next().getKey();
+                }
+            else
+                suggestedSimulation = lastSimulationParams.entrySet().iterator().next().getKey();
+//            If no previous simulations found, suggest based on the highest preference
+        } else
+            suggestedSimulation = Collections.max(
+                    userPreferences.entrySet(), Map.Entry.comparingByValue()).getKey();
 
         return suggestedSimulation;
     }
@@ -63,14 +133,13 @@ public class SimulationService {
         return filename;
     }
 
-//    run matlab simulation asynchronously
+//    Run matlab simulation asynchronously
     public void runSimulation(Simulation simulation) {
 //        Declare an Engine future object and an Engine object.
 //        Future object is used to return the result in case of an asynchronous call.
         Future<MatlabEngine> matlabEngineFuture = MatlabEngine.startMatlabAsync();
         log.debug("MATLAB started asynchronously.");
 
-//        save simulation parameters to file
         saveParameters(simulation);
 
         try {
@@ -79,6 +148,7 @@ public class SimulationService {
 
             Future<Void> simulationFuture = new CompletableFuture<>();
 
+//            Pass filename to matlab
             matlabEngine.putVariableAsync("filename", simulation.getFileName().toCharArray());
 
             switch (simulation.getSimulationType()){
@@ -89,7 +159,8 @@ public class SimulationService {
                     break;
                 case HUMOUR:
                     log.debug("Running humour simulation..");
-                    simulationFuture = matlabEngine.evalAsync("humour script");
+                    simulationFuture = matlabEngine.evalAsync(new String(
+                            Files.readAllBytes(Paths.get("simulation/simulation_humour.m")), StandardCharsets.UTF_8));
                     break;
                 case MUSIC:
                     log.debug("Running music simulation..");
