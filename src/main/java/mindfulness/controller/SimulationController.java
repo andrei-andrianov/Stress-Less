@@ -39,10 +39,10 @@ public class SimulationController {
         simulation.setSimulationType(simulationService.suggestSimulation(userId));
         simulation.setFileName(simulationService.generateFilename(simulation));
 
-//        simulationService.runSimulation(simulation);
+        simulationService.runSimulation(simulation);
 
-//        return simulationRepository.save(simulation);
-        return new Simulation();
+        return simulationRepository.save(simulation);
+//        return new Simulation();
     }
 
     @GetMapping("/suggestSimulation/{userId}")

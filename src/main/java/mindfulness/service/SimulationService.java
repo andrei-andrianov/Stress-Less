@@ -30,11 +30,34 @@ public class SimulationService {
 
     private final UserRepository userRepository;
     private final SimulationRepository simulationRepository;
+//    Max number of recent simulations to take into account for parameters tuning and therapy suggestion
+    private final Integer MAX_NUMBER_OF_RECENT_SIMULATIONS = 5;
 
     public SimulationService(UserRepository userRepository, SimulationRepository simulationRepository)
     {
         this.userRepository = userRepository;
         this.simulationRepository = simulationRepository;
+    }
+
+//    Get list of recent simulations for a user
+    private List<Simulation> getRecentSimulations(String userId){
+        List<Simulation> simulationList = simulationRepository.findByUserId(userId);
+
+        if (!simulationList.isEmpty()){
+//        Sort simulations by timestamp
+            simulationList.sort((s1, s2) -> {
+                if (s1.getTimestamp() == s2.getTimestamp())
+                    return 0;
+                return s1.getTimestamp().getTime() > s2.getTimestamp().getTime() ? -1 : 1;
+            });
+
+//        Leave only the most recent simulations
+            simulationList = simulationList.stream()
+                    .limit(MAX_NUMBER_OF_RECENT_SIMULATIONS)
+                    .collect(Collectors.toList());
+        }
+
+        return simulationList;
     }
 
     public SimulationType suggestSimulation(String userId){
@@ -55,33 +78,21 @@ public class SimulationService {
                         (e1, e2) -> e1, LinkedHashMap::new));
 
 //        Get list of simulations for a user
-        List<Simulation> simulationList = simulationRepository.findByUserId(userId);
+        List<Simulation> simulationList = getRecentSimulations(userId);
 
-        if (!(simulationList.size() < 5)){
-//        Sort simulations by time
-            simulationList.sort((s1, s2) -> {
-                if (s1.getTimestamp() == s2.getTimestamp())
-                    return 0;
-                return s1.getTimestamp().getTime() > s2.getTimestamp().getTime() ? -1 : 1;
-            });
-
-//        Leave only 5 most recent simulations
-            simulationList = simulationList.stream()
-                    .limit(5)
-                    .collect(Collectors.toList());
-
+        if (!(simulationList.size() < MAX_NUMBER_OF_RECENT_SIMULATIONS)){
             List<Map<SimulationType, Float>> simulationParams = new ArrayList<>();
 
-//            Read simulation results from file
+//            Read simulation parameters from file
             for (Simulation simulation : simulationList) {
                 List<List<String>> simulationParamsFileList = new ArrayList<>();
 
                 try (CSVReader csvReader = new CSVReader(
                         new FileReader("simulation/data/" + simulation.getFileName() + "_params.csv"))) {
 
-                    String[] values;
-                    while ((values = csvReader.readNext()) != null)
-                        simulationParamsFileList.add(Arrays.asList(values));
+                    String[] line;
+                    while ((line = csvReader.readNext()) != null)
+                        simulationParamsFileList.add(Arrays.asList(line));
 
                     Map<SimulationType, Float> singleSimulationParams = new LinkedHashMap<>();
                     singleSimulationParams.put(simulation.getSimulationType(),
@@ -89,7 +100,7 @@ public class SimulationService {
 
                     simulationParams.add(singleSimulationParams);
                 } catch (IOException e) {
-                    log.error("Could not read simulation results file", e);
+                    log.error("Could not read simulation params file", e);
                 }
             }
 
@@ -118,7 +129,7 @@ public class SimulationService {
             suggestedSimulation = Collections.max(
                     userPreferences.entrySet(), Map.Entry.comparingByValue()).getKey();
 
-        return suggestedSimulation;
+        return SimulationType.MINDFULNESS;
     }
 
     public String generateFilename(Simulation simulation){
@@ -179,19 +190,59 @@ public class SimulationService {
         }
     }
 
+//    Simulation parameters tuning and saving
     private void saveParameters(Simulation simulation){
         log.debug("Saving simulation parameters to file..");
-        List<Float> simulationParameters = new ArrayList<>();
-        simulationParameters.add(
+        List<Float> simulationParams;
+        List<Float> currentSimulationParams = new ArrayList<>();
+        currentSimulationParams.add(
                 simulation.getUser().getStressEvent() != null ? simulation.getUser().getStressEvent() : 0);
-        simulationParameters.add(
+        currentSimulationParams.add(
                 simulation.getUser().getStressLevel() != null ? simulation.getUser().getStressLevel() : 0);
-        simulationParameters.add(
+        currentSimulationParams.add(
                 simulation.getUser().getPositiveBelief() != null ? simulation.getUser().getPositiveBelief() : 0);
-        simulationParameters.add(
+        currentSimulationParams.add(
                 simulation.getUser().getNegativeBelief() != null ? simulation.getUser().getNegativeBelief() : 0);
 
-        String simulationParametersString = simulationParameters.stream()
+//        Here goes the parameters tuning part
+        List<Simulation> simulationList = getRecentSimulations(simulation.getUser().getId());
+
+        if (!(simulationList.size() < MAX_NUMBER_OF_RECENT_SIMULATIONS)){
+            log.debug("Tuning simulation parameters..");
+            List<List<Float>> simulationParamsList = new ArrayList<>();
+
+            for (Simulation singleSimulation : simulationList){
+                List<List<String>> simulationParamsFileList = new ArrayList<>();
+
+                try (CSVReader csvReader = new CSVReader(
+                        new FileReader("simulation/data/" + singleSimulation.getFileName() + "_params.csv"))){
+
+                    String[] line;
+                    while ((line = csvReader.readNext()) != null)
+                        simulationParamsFileList.add(Arrays.asList(line));
+
+                    simulationParamsList.add(simulationParamsFileList.get(1).stream()
+                            .map(Float::valueOf)
+                            .collect(Collectors.toList()));
+
+                } catch (IOException e){
+                    log.error("Could not read simulation params file", e);
+                }
+            }
+
+//            Exponential moving average calculation
+            List<Float> parametersTuningResult = new ArrayList<>();
+            List<Float> lastSimulationParams = simulationParamsList.get(simulationParamsList.size() - 1);
+
+            for (int i = 0; i < 4; i++)
+                parametersTuningResult.add((currentSimulationParams.get(i) - lastSimulationParams.get(i)) *
+                        ((float)2/((float)MAX_NUMBER_OF_RECENT_SIMULATIONS + (float)1)) + lastSimulationParams.get(i));
+
+            simulationParams = parametersTuningResult;
+        } else
+            simulationParams = currentSimulationParams;
+
+        String simulationParametersString = simulationParams.stream()
                 .map(Object::toString)
                 .collect(Collectors.joining(","));
 
@@ -213,7 +264,6 @@ public class SimulationService {
         }
     }
 
-//    TODO implement fetching stress level for the past 14 days
     public List<Float> getStressLevel(String userId){
         log.debug("Getting stress level for the last 14 days..");
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
