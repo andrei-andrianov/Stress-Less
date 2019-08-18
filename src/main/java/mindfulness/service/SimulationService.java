@@ -9,6 +9,7 @@ import mindfulness.model.Simulation;
 import mindfulness.model.User;
 import mindfulness.repository.SimulationRepository;
 import mindfulness.repository.UserRepository;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.FileReader;
@@ -22,7 +23,9 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -31,7 +34,7 @@ public class SimulationService {
     private final UserRepository userRepository;
     private final SimulationRepository simulationRepository;
 //    Max number of recent simulations to take into account for parameters tuning and therapy suggestion
-    private final Integer MAX_NUMBER_OF_RECENT_SIMULATIONS = 5;
+    private final Integer MIN_NUMBER_OF_RECENT_SIMULATIONS = 5;
 
     public SimulationService(UserRepository userRepository, SimulationRepository simulationRepository)
     {
@@ -53,7 +56,7 @@ public class SimulationService {
 
 //        Leave only the most recent simulations
             simulationList = simulationList.stream()
-                    .limit(MAX_NUMBER_OF_RECENT_SIMULATIONS)
+                    .limit(MIN_NUMBER_OF_RECENT_SIMULATIONS)
                     .collect(Collectors.toList());
         }
 
@@ -80,7 +83,7 @@ public class SimulationService {
 //        Get list of simulations for a user
         List<Simulation> simulationList = getRecentSimulations(userId);
 
-        if (!(simulationList.size() < MAX_NUMBER_OF_RECENT_SIMULATIONS)){
+        if (!(simulationList.size() < MIN_NUMBER_OF_RECENT_SIMULATIONS)){
             List<Map<SimulationType, Float>> simulationParams = new ArrayList<>();
 
 //            Read simulation parameters from file
@@ -129,12 +132,12 @@ public class SimulationService {
             suggestedSimulation = Collections.max(
                     userPreferences.entrySet(), Map.Entry.comparingByValue()).getKey();
 
-        return SimulationType.MINDFULNESS;
+        return suggestedSimulation;
     }
 
     public String generateFilename(Simulation simulation){
         log.debug("Generating simulation filename..");
-        String filename = new StringBuilder()
+        final String filename = new StringBuilder()
                 .append(simulation.getUser().getId())
                 .append("_")
                 .append(simulation.getSimulationType())
@@ -144,8 +147,23 @@ public class SimulationService {
         return filename;
     }
 
+    @Async
+    public Future<Void> tuneParameters(MatlabEngine matlabEngine){
+        Future<Void> parameterTuningFuture = new CompletableFuture<>();
+
+        try{
+            log.debug("Tuning parameters for the simulation..");
+            parameterTuningFuture = matlabEngine.evalAsync(new String(
+                    Files.readAllBytes(Paths.get("simulation/simulanneal.m")), StandardCharsets.UTF_8));
+        } catch (IOException e){
+            log.error("Runtime error while running parameter tuning", e);
+        }
+
+        return parameterTuningFuture;
+    }
+
 //    Run matlab simulation asynchronously
-    public void runSimulation(Simulation simulation) {
+    public void runSimulation(Simulation simulation, boolean isTuningOn) {
 //        Declare an Engine future object and an Engine object.
 //        Future object is used to return the result in case of an asynchronous call.
         Future<MatlabEngine> matlabEngineFuture = MatlabEngine.startMatlabAsync();
@@ -167,15 +185,55 @@ public class SimulationService {
                     log.debug("Running mindfulness simulation..");
                     simulationFuture = matlabEngine.evalAsync(new String(
                             Files.readAllBytes(Paths.get("simulation/simulation_mindfulness.m")), StandardCharsets.UTF_8));
+
+                    if (isTuningOn){
+                        TimeUnit.SECONDS.sleep(90);
+                        Future<Void> parameterTuningFuture = tuneParameters(matlabEngine);
+
+                        while (true)
+                            if (parameterTuningFuture.isDone())
+                                break;
+
+                        simulationFuture = matlabEngine.evalAsync(new String(
+                                Files.readAllBytes(Paths.get("simulation/simulation_mindfulness.m")), StandardCharsets.UTF_8));
+                    }
+
                     break;
                 case HUMOUR:
                     log.debug("Running humour simulation..");
                     simulationFuture = matlabEngine.evalAsync(new String(
                             Files.readAllBytes(Paths.get("simulation/simulation_humour.m")), StandardCharsets.UTF_8));
+
+                    if (isTuningOn){
+                        TimeUnit.SECONDS.sleep(90);
+                        Future<Void> parameterTuningFuture = tuneParameters(matlabEngine);
+
+                        while (true)
+                            if (parameterTuningFuture.isDone())
+                                break;
+
+                        simulationFuture = matlabEngine.evalAsync(new String(
+                                Files.readAllBytes(Paths.get("simulation/simulation_humour.m")), StandardCharsets.UTF_8));
+                    }
+
                     break;
                 case MUSIC:
                     log.debug("Running music simulation..");
-                    simulationFuture = matlabEngine.evalAsync("music script");
+                    simulationFuture = matlabEngine.evalAsync(new String(
+                            Files.readAllBytes(Paths.get("simulation/simulation_music.m")), StandardCharsets.UTF_8));
+
+                    if (isTuningOn){
+                        TimeUnit.SECONDS.sleep(90);
+                        Future<Void> parameterTuningFuture = tuneParameters(matlabEngine);
+
+                        while (true)
+                            if (parameterTuningFuture.isDone())
+                                break;
+
+                        simulationFuture = matlabEngine.evalAsync(new String(
+                                Files.readAllBytes(Paths.get("simulation/simulation_music.m")), StandardCharsets.UTF_8));
+                    }
+
                     break;
             }
 
@@ -186,14 +244,65 @@ public class SimulationService {
             }
 
         } catch (ExecutionException | InterruptedException | IOException e){
-            log.error("Runtime error while starting a simulation", e);
+            log.error("Runtime error while running a simulation", e);
         }
+    }
+
+    private List<Float> exponentialMovingAverage(Simulation simulation){
+        List<Float> simulationParamsTuned;
+        List<Float> currentSimulationParams = new ArrayList<>();
+        currentSimulationParams.add(simulation.getDefParam1());
+        currentSimulationParams.add(simulation.getDefParam2());
+        currentSimulationParams.add(simulation.getDefParam3());
+
+//        Here goes the parameters tuning part
+        List<Simulation> simulationList = getRecentSimulations(simulation.getUser().getId());
+
+        if (!(simulationList.size() < MIN_NUMBER_OF_RECENT_SIMULATIONS)){
+            log.debug("Tuning simulation parameters..");
+            List<List<Float>> simulationParamsListTuned = new ArrayList<>();
+
+            for (Simulation singleSimulation : simulationList){
+                List<List<String>> simulationParamsFileListTuned = new ArrayList<>();
+
+                try (CSVReader csvReader = new CSVReader(
+                        new FileReader("simulation/data/" + singleSimulation.getFileName() + "_tuned.csv"))){
+
+                    String[] line;
+                    while ((line = csvReader.readNext()) != null)
+                        simulationParamsFileListTuned.add(Arrays.asList(line));
+
+                    simulationParamsListTuned.add(simulationParamsFileListTuned.get(1).stream()
+                            .map(Float::valueOf)
+                            .collect(Collectors.toList()));
+
+                } catch (IOException e){
+                    log.error("Could not read simulation params file", e);
+                }
+            }
+
+//            Exponential moving average calculation
+            List<Float> parametersTuningResult = new ArrayList<>();
+            currentSimulationParams = simulationParamsListTuned.get(simulationParamsListTuned.size() - 1);
+            List<Float> lastSimulationParamsTuned = simulationParamsListTuned.get(simulationParamsListTuned.size() - 2);
+
+            for (int i = 0; i < 4; i++)
+                parametersTuningResult.add((currentSimulationParams.get(i) - lastSimulationParamsTuned.get(i)) *
+                        ((float)2/((float) MIN_NUMBER_OF_RECENT_SIMULATIONS + (float)1)) + lastSimulationParamsTuned.get(i));
+
+            simulationParamsTuned = parametersTuningResult;
+        } else
+//            Using default parameters
+            simulationParamsTuned = currentSimulationParams;
+
+        return simulationParamsTuned;
     }
 
 //    Simulation parameters tuning and saving
     private void saveParameters(Simulation simulation){
         log.debug("Saving simulation parameters to file..");
         List<Float> simulationParams;
+        List<Float> simulationParamsTuned;
         List<Float> currentSimulationParams = new ArrayList<>();
         currentSimulationParams.add(
                 simulation.getUser().getStressEvent() != null ? simulation.getUser().getStressEvent() : 0);
@@ -204,11 +313,12 @@ public class SimulationService {
         currentSimulationParams.add(
                 simulation.getUser().getNegativeBelief() != null ? simulation.getUser().getNegativeBelief() : 0);
 
+
 //        Here goes the parameters tuning part
         List<Simulation> simulationList = getRecentSimulations(simulation.getUser().getId());
 
-        if (!(simulationList.size() < MAX_NUMBER_OF_RECENT_SIMULATIONS)){
-            log.debug("Tuning simulation parameters..");
+        if (!(simulationList.size() < MIN_NUMBER_OF_RECENT_SIMULATIONS)){
+            log.debug("Tuning user simulation parameters..");
             List<List<Float>> simulationParamsList = new ArrayList<>();
 
             for (Simulation singleSimulation : simulationList){
@@ -236,7 +346,7 @@ public class SimulationService {
 
             for (int i = 0; i < 4; i++)
                 parametersTuningResult.add((currentSimulationParams.get(i) - lastSimulationParams.get(i)) *
-                        ((float)2/((float)MAX_NUMBER_OF_RECENT_SIMULATIONS + (float)1)) + lastSimulationParams.get(i));
+                        ((float)2/((float) MIN_NUMBER_OF_RECENT_SIMULATIONS + (float)1)) + lastSimulationParams.get(i));
 
             simulationParams = parametersTuningResult;
         } else
@@ -246,12 +356,19 @@ public class SimulationService {
                 .map(Object::toString)
                 .collect(Collectors.joining(","));
 
+        simulationParamsTuned = exponentialMovingAverage(simulation);
+        String simulationParametersTunedString = simulationParamsTuned.stream()
+                .map(Object::toString)
+                .collect(Collectors.joining(","));
+
 //        File with global settings for a simulation run
 //        Local file needed just to store parameters
         Path simulationParametersFileGlobal = Paths.get("simulation/params.csv");
         Path simulationParametersFileLocal = Paths.get("simulation/data/" + simulation.getFileName() + "_params.csv");
+        Path simulationParametersTunedFileLocal = Paths.get("simulation/data/" + simulation.getFileName() + "_tuned.csv");
 
         String simulationParametersHeader = "stressEvent,stressLevel,positiveBelief,negativeBelief\n";
+        String simulationParametersTunedHeader = "wsee,fsee,esee\n";
 
         try{
             Files.write(simulationParametersFileGlobal, simulationParametersHeader.getBytes());
@@ -259,6 +376,9 @@ public class SimulationService {
 
             Files.write(simulationParametersFileLocal, simulationParametersHeader.getBytes());
             Files.write(simulationParametersFileLocal, simulationParametersString.getBytes(), StandardOpenOption.APPEND);
+
+            Files.write(simulationParametersTunedFileLocal, simulationParametersTunedHeader.getBytes());
+            Files.write(simulationParametersTunedFileLocal, simulationParametersTunedString.getBytes(), StandardOpenOption.APPEND);
         } catch (IOException e){
             log.error("Error occurred while saving simulation parameters", e);
         }

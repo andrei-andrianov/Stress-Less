@@ -1,15 +1,5 @@
-clc
-clear
-
-close all
 format long
 N=24;
-
-% for i=1:N
-%     for j=1:N
-%                 W(i,j)=input(['W_',num2str(i),'_',num2str(j)]);
-%     end
-% end
 
 
 %    X1     X2     X3     X4    X5     X6     X7    X8    X9   X10   X11   X12   X13   X14   X15   X16   X17    X18     X19    X20    X21    X22   X23     X24 
@@ -102,19 +92,41 @@ amp=zeros(N);
 adcon=zeros(14+N,N^2);
 
 eta(17,12)=0.8;
-
 hebb(17,12)=0.99;
-
 mu(17,12)=0.98;
+
+%path to current file
+path = strcat(cd, '/simulation/params.csv');
+
+%user parameters
+params = readtable(path);
+wsc = params.stressEvent; % .95-1
+bsp = params.positiveBelief; %.05-.6
+% esee = params.stressLevel;
+
+path = strcat(cd, '/simulation/output/simulanneal.mat');
+%if speed factors created by parameter tuning exist
+if(exist(path, 'file'))
+    simulanneal = load(path);
+    simulanneal = simulanneal.speed_factor;
+    
+    Sp_f(1, 1) = simulanneal(1, 1);%wsee
+    Sp_f(1, 7) = simulanneal(1, 2);%fsee
+    Sp_f(1, 9) = simulanneal(1, 3);%esee
+    
+    delete(path);
+end
 
 
 dt=1;
-time=0:dt:6000;
+max_t = 6000;
+time=0:dt:max_t;
 L=length(time);
 STDX=zeros(L,N);
-STDX(1,3)=1;
-STDX(1,10)=0.01;
-STDX(1,13)=0.01;
+
+STDX(1,3)=1;%wsc
+STDX(1,10)=0.01;%wsm
+STDX(1,13)=0.01;%wsm
 
 k=0;
 for i=1:N
@@ -195,22 +207,16 @@ end
 
     end
 
-    
-color_array = rand(N, 3); 
-    for i = 1:N
-        plot(time, STDX(:,i), 'color', color_array(i,:),'lineWidth',3)
-        hold on
-    end
 
+save(strcat(cd, '/simulation/output/connection_weights.mat'), 'W');
+save(strcat(cd, '/simulation/output/state_initialization.mat'), 'state_initialization');
+save(strcat(cd, '/simulation/output/combi_func.mat'), 'O');
+save(strcat(cd, '/simulation/output/delta_t.mat'), 'dt');
+save(strcat(cd, '/simulation/output/max_t.mat'), 'max_t');
+save(strcat(cd, '/simulation/output/speed_factors.mat'), 'Sp_f')
+save(strcat(cd, '/simulation/output/statedyn.mat'), 'STDX');
+save(strcat(cd, '/simulation/output/eta.mat'), 'eta');
+save(strcat(cd, '/simulation/output/hebb.mat'), 'hebb');
+save(strcat(cd, '/simulation/output/mu.mat'), 'mu');
 
-for i=1:N
-    if i<10
-    ch(i,1:3)=['X',num2str(i),' '];
-    else
-         ch(i,1:4)=['X',num2str(i),' '];
-    end
-end
-legend(ch)
-grid on
-
-
+save(strcat(cd, '/simulation/data/', filename, '_results'), 'STDX');

@@ -1,16 +1,5 @@
-clc
-clear
-
-close all
 format long
 N=32;
-
-% for i=1:N
-%     for j=1:N
-%                 W(i,j)=input(['W_',num2str(i),'_',num2str(j)]);
-%     end
-% end
-
 
 %    X1     X2     X3     X4    X5    X6      X7    X8    X9   X10   X11   X12   X13   X14   X15   X16    X17    X18    X19    X20    X21    X22     X23   X24   X25   X26   X27    X28     X29    X30    X31    X32 
 %   wsee   ssee   wsc    ssc  srsee   srsc   fsee  psee  esee  srsb goalb  psb   wsm1  wsm2  ssm1  ssm2  ssin1  ssin2  srsin1 srsin2 srsm1  srse1   srsm2 srse2  bsn   bsp  psin1  psin2    pse1   pse2  esin1  esin2 
@@ -110,26 +99,46 @@ amp=zeros(N);
 adcon=zeros(14+N,N^2);
 
 eta(19,12)=0.5;
-
 hebb(19,12)=0.7;
-
 mu(19,12)=0.98;
 
 eta(20,12)=0.5;
-
 hebb(20,12)=0.7;
-
 mu(20,12)=0.98;
 
+%path to current file
+path = strcat(cd, '/simulation/params.csv');
+
+%user parameters
+params = readtable(path);
+wsc = params.stressEvent; % .95-1
+bsp = params.positiveBelief; %.05-.6
+% esee = params.stressLevel;
+
+path = strcat(cd, '/simulation/output/simulanneal.mat');
+%if speed factors created by parameter tuning exist
+if(exist(path, 'file'))
+    simulanneal = load(path);
+    simulanneal = simulanneal.speed_factor;
+    
+    Sp_f(1, 1) = simulanneal(1, 1);%wsee
+    Sp_f(1, 7) = simulanneal(1, 2);%fsee
+    Sp_f(1, 9) = simulanneal(1, 3);%esee
+    
+    delete(path);
+end
+
 dt=1;
-time=0:dt:8000;
+max_t = 8000;
+time=0:dt:max_t;
 L=length(time);
 STDX=zeros(L,N);
-STDX(1,3)=1;
+
+STDX(1,3)=1;%wsc
 %STDX(1,13)=0.2;
-STDX(1,14)=0.02;
-STDX(1,11)=0.01;
-STDX(1,32)=0.01;
+STDX(1,14)=0.02;%wsm2
+STDX(1,11)=0.01;%goalb
+STDX(1,32)=0.01;%esin2
 %STDX(1,9)=0.081;
 
 k=0;
@@ -211,31 +220,15 @@ end
 
     end
 
-    
-color_array = rand(N, 3); 
-    for i = 1:N
-        plot(time, STDX(:,i), 'color', color_array(i,:),'lineWidth',3)
-        hold on
-    end
+save(strcat(cd, '/simulation/output/connection_weights.mat'), 'W');
+save(strcat(cd, '/simulation/output/state_initialization.mat'), 'state_initialization');
+save(strcat(cd, '/simulation/output/combi_func.mat'), 'O');
+save(strcat(cd, '/simulation/output/delta_t.mat'), 'dt');
+save(strcat(cd, '/simulation/output/max_t.mat'), 'max_t');
+save(strcat(cd, '/simulation/output/speed_factors.mat'), 'Sp_f')
+save(strcat(cd, '/simulation/output/statedyn.mat'), 'STDX');
+save(strcat(cd, '/simulation/output/eta.mat'), 'eta');
+save(strcat(cd, '/simulation/output/hebb.mat'), 'hebb');
+save(strcat(cd, '/simulation/output/mu.mat'), 'mu');
 
-
-for i=1:N
-    if i<10
-    ch(i,1:3)=['X',num2str(i),' '];
-    else
-         ch(i,1:4)=['X',num2str(i),' '];
-    end
-end
-legend(ch)
-grid on
-
-figure(2)
-
-for i=73:74
-plot(time,condy,'lineWidth',3)
-hold on
-end
-
-
-legend('X1 _ 6','X1 _ 7')
-grid on
+save(strcat(cd, '/simulation/data/', filename, '_results'), 'STDX');

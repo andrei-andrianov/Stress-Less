@@ -39,7 +39,28 @@ public class SimulationController {
         simulation.setSimulationType(simulationService.suggestSimulation(userId));
         simulation.setFileName(simulationService.generateFilename(simulation));
 
-        simulationService.runSimulation(simulation);
+        switch (simulation.getSimulationType()){
+            case MUSIC:
+                simulation.setDefParam1(0.5f);
+                simulation.setDefParam2(0.5f);
+                simulation.setDefParam3(0.5f);
+                break;
+            case HUMOUR:
+                simulation.setDefParam1(0.9f);
+                simulation.setDefParam2(0.008f);
+                simulation.setDefParam3(0.005f);
+                break;
+            case MINDFULNESS:
+                simulation.setDefParam1(0.015f);
+                simulation.setDefParam2(0.9f);
+                simulation.setDefParam3(0.015f);
+                break;
+
+                default:
+                    break;
+        }
+
+        simulationService.runSimulation(simulation, false);
 
         return simulationRepository.save(simulation);
 //        return new Simulation();

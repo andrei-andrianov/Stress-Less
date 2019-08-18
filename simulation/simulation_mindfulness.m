@@ -111,8 +111,22 @@ wsc = params.stressEvent; % .95-1
 bsp = params.positiveBelief; %.05-.6
 % esee = params.stressLevel;
 
+path = strcat(cd, '/simulation/output/simulanneal.mat');
+%if speed factors created by parameter tuning exist
+if(exist(path, 'file'))
+    simulanneal = load(path);
+    simulanneal = simulanneal.speed_factor;
+    
+    Sp_f(1, 1) = simulanneal(1, 1);%wsee
+    Sp_f(1, 7) = simulanneal(1, 2);%fsee
+    Sp_f(1, 9) = simulanneal(1, 3);%esee
+    
+    delete(path);
+end
+
 dt=1;
-time=0:dt:7000;
+max_t = 7000;
+time=1:dt:max_t;
 L=length(time);
 STDX=zeros(L,N);
 
@@ -123,6 +137,7 @@ STDX(1,15)=bsp;% mem e
 STDX(1,18)=bsp;% mem w
 STDX(1,23)=bsp;% bs p
 % STDX(1,9)=esee;% es ee
+state_initialization = STDX(1,:);
 
 k=0;
 for i=1:N
@@ -210,31 +225,45 @@ for i=2:L
     end
 end
 
-L1 = 'wsee';
-L2 = 'ssee';
-L3 = 'wsc';
-L4 = 'ssc';
-L5 = 'srsee';
-L6 = 'srsc';
-L7 = 'fsee';
-L8 = 'psee';
-L9 = 'esee';
-L10 = 'goal';
-L11 = 'sws';
-L12 = 'ssb';
-L13 = 'srsb';
-L14 = 'esb';
-L15 = 'meme';
-L16 = 'ins';
-L17 = 'psy';
-L18 = 'memw';
-L19 = 'ssmy';
-L20 = 'srsmy';
-L21 = 'esmy';
-L22 = 'memlt';
-L23 = 'bsp';
+save(strcat(cd, '/simulation/output/connection_weights.mat'), 'W');
+save(strcat(cd, '/simulation/output/state_initialization.mat'), 'state_initialization');
+save(strcat(cd, '/simulation/output/combi_func.mat'), 'O');
+save(strcat(cd, '/simulation/output/delta_t.mat'), 'dt');
+save(strcat(cd, '/simulation/output/max_t.mat'), 'max_t');
+save(strcat(cd, '/simulation/output/speed_factors.mat'), 'Sp_f')
+save(strcat(cd, '/simulation/output/statedyn.mat'), 'STDX');
+save(strcat(cd, '/simulation/output/eta.mat'), 'eta');
+save(strcat(cd, '/simulation/output/hebb.mat'), 'hebb');
+save(strcat(cd, '/simulation/output/mu.mat'), 'mu');
 
-varNames = {L1,L2,L3,L4,L5,L6,L7,L8,L9,L10,L11,L12,L13,L14,L15,L16,L17,L18,L19,L20,L21,L22,L23};
+save(strcat(cd, '/simulation/data/', filename, '_results'), 'STDX');
+
+
+% L1 = 'wsee';
+% L2 = 'ssee';
+% L3 = 'wsc';
+% L4 = 'ssc';
+% L5 = 'srsee';
+% L6 = 'srsc';
+% L7 = 'fsee';
+% L8 = 'psee';
+% L9 = 'esee';
+% L10 = 'goal';
+% L11 = 'sws';
+% L12 = 'ssb';
+% L13 = 'srsb';
+% L14 = 'esb';
+% L15 = 'meme';
+% L16 = 'ins';
+% L17 = 'psy';
+% L18 = 'memw';
+% L19 = 'ssmy';
+% L20 = 'srsmy';
+% L21 = 'esmy';
+% L22 = 'memlt';
+% L23 = 'bsp';
+% 
+% varNames = {L1,L2,L3,L4,L5,L6,L7,L8,L9,L10,L11,L12,L13,L14,L15,L16,L17,L18,L19,L20,L21,L22,L23};
 
 % color_array = rand(N, 3);
 % figure();
@@ -246,11 +275,11 @@ varNames = {L1,L2,L3,L4,L5,L6,L7,L8,L9,L10,L11,L12,L13,L14,L15,L16,L17,L18,L19,L
 % legend(varNames)
 % grid on
 
-path = strcat(cd, '/simulation/format.csv');
-delete(path);
-result = table(STDX);
-writetable(result, path, 'delimiter', ',');
-result = readtable(path);
-result.Properties.VariableNames = varNames;
-path = strcat(cd, '/simulation/data/', filename, '_results.csv');
-writetable(result, path, 'delimiter', ',');
+% path = strcat(cd, '/simulation/format.csv');
+% delete(path);
+% result = table(STDX);
+% writetable(result, path, 'delimiter', ',');
+% result = readtable(path);
+% result.Properties.VariableNames = varNames;
+% path = strcat(cd, '/simulation/data/', filename, '_results.csv');
+% writetable(result, path, 'delimiter', ',');

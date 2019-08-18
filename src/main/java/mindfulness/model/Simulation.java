@@ -19,4 +19,8 @@ public class Simulation {
     private Timestamp timestamp;
     private SimulationType simulationType;
     private String fileName;
+
+    private Float defParam1;//wsee
+    private Float defParam2;//fsee
+    private Float defParam3;//esee
 }
