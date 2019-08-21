@@ -115,7 +115,7 @@ path = strcat(cd, '/simulation/output/simulanneal.mat');
 %if speed factors created by parameter tuning exist
 if(exist(path, 'file'))
     simulanneal = load(path);
-    simulanneal = simulanneal.speed_factor;
+    simulanneal = simulanneal.x;
     
     Sp_f(1, 1) = simulanneal(1, 1);%wsee
     Sp_f(1, 7) = simulanneal(1, 2);%fsee

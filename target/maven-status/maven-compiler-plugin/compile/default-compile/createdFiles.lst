@@ -1,4 +1,6 @@
+mindfulness/exception/UserAlreadyExistsException.class
 mindfulness/model/User.class
+mindfulness/service/SpringAsyncConfig.class
 mindfulness/EngineConsoleDemo.class
 mindfulness/model/Simulation.class
 mindfulness/service/SimulationService.class
@@ -10,3 +12,4 @@ mindfulness/model/SimulationType.class
 mindfulness/Application.class
 mindfulness/repository/SimulationRepository.class
 mindfulness/repository/UserRepository.class
+mindfulness/controller/SimulationController$1.class

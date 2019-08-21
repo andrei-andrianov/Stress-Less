@@ -63,7 +63,6 @@ public class SimulationController {
         simulationService.runSimulation(simulation, false);
 
         return simulationRepository.save(simulation);
-//        return new Simulation();
     }
 
     @GetMapping("/suggestSimulation/{userId}")
