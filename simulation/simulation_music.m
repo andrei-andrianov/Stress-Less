@@ -119,7 +119,7 @@ path = strcat(cd, '/simulation/output/simulanneal.mat');
 %if speed factors created by parameter tuning exist
 if(exist(path, 'file'))
     simulanneal = load(path);
-    simulanneal = simulanneal.speed_factor;
+    simulanneal = simulanneal.x;
     
     Sp_f(1, 1) = simulanneal(1, 1);%wsee
     Sp_f(1, 7) = simulanneal(1, 2);%fsee
@@ -134,11 +134,13 @@ time=0:dt:max_t;
 L=length(time);
 STDX=zeros(L,N);
 
-STDX(1,3)=1;%wsc
+STDX(1,3)=wsc;%wsc
 %STDX(1,13)=0.2;
 STDX(1,14)=0.02;%wsm2
 STDX(1,11)=0.01;%goalb
 STDX(1,32)=0.01;%esin2
+STDX(1,25)=-bsp;%negative belief
+STDX(1,26)=bsp;%positive belief
 %STDX(1,9)=0.081;
 
 k=0;
@@ -231,4 +233,4 @@ save(strcat(cd, '/simulation/output/eta.mat'), 'eta');
 save(strcat(cd, '/simulation/output/hebb.mat'), 'hebb');
 save(strcat(cd, '/simulation/output/mu.mat'), 'mu');
 
-save(strcat(cd, '/simulation/data/', filename, '_results'), 'STDX');
+save(strcat(cd, '/simulation/data/', filename, '_results.mat'), 'STDX');

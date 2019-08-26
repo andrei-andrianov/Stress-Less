@@ -1,38 +1,38 @@
  function SSR = parameter_tuning (P)
-    state_initialization = load(strcat(cd, '/simulation/output/state_initialization'));%.state_initialization; % Should Be filled 
+    state_initialization = load(strcat(cd, '/simulation/output/state_initialization'));
     state_initialization = state_initialization.state_initialization;
     
     speed_factors = P;
      
-    Output = BDiSNModel(state_initialization, speed_factors) ;
+    Output = BDiSNModel(state_initialization, speed_factors);
     
     Empirical_Data = load(strcat(cd, '/simulation/output/statedyn'));
     emp_data = Empirical_Data.STDX;
     
     [o_row,o_col] = size(Output);
     
-    SSR = sqrt(nansum (nansum ((Output - emp_data) .^2 )) / (o_col * o_row)); %average deviation
+    SSR = sqrt(nansum (nansum ((Output - emp_data) .^2 )) / (o_col * o_row));
  end
 
 function statedyn = BDiSNModel(state_initialization, spoody)
 
     connection_values = load(strcat(cd, '/simulation/output/connection_weights'));
-    connection_values=connection_values.W; % Should Be filled
+    connection_values=connection_values.W; 
 
     speed_factors = load(strcat(cd, '/simulation/output/speed_factors'));
-    speed_factors = speed_factors.Sp_f;% Should be filled
+    speed_factors = speed_factors.Sp_f;
     
     speed_factors(1, 1) = spoody(1, 1);%wsee
     speed_factors(1, 7) = spoody(1, 2);%fsee
     speed_factors(1, 9) = spoody(1, 3);%esee
     
     combi_func = load(strcat(cd, '/simulation/output/combi_func'));
-    combi_func = combi_func.O;% Should be filled
+    combi_func = combi_func.O;
     
     delta_t = load(strcat(cd, '/simulation/output/delta_t'));
-    delta_t = delta_t.dt;% Should be filled
+    delta_t = delta_t.dt;
     max_t=load(strcat(cd, '/simulation/output/max_t'));
-    max_t=max_t.max_t;% Should be filled
+    max_t=max_t.max_t;
     
     %adaptation connections
     ad_eta = load(strcat(cd, '/simulation/output/eta'));
@@ -61,7 +61,7 @@ function statedyn = BDiSNModel(state_initialization, spoody)
     htau=threshold;
     amp=amplification;
 
-    id=combi_func(1,:);  %%% taking rows of functions
+    id=combi_func(1,:); 
     sum=combi_func(2,:);
     ssum=combi_func(3,:);
     lambda=combi_func(4,:);
@@ -76,7 +76,7 @@ function statedyn = BDiSNModel(state_initialization, spoody)
     adas=combi_func(13,:);
     adat=combi_func(14,:);
 
-    k=0;    %state initialization
+    k=0;    
     for i=1:N
         for j=1:N
             k=k+1;
@@ -116,13 +116,11 @@ function statedyn = BDiSNModel(state_initialization, spoody)
                     C7=C7+condy(i-1,(jj-1)*N+j)*STDX(i-1,jj);
                 end
                 wxsum(i-1,j)=C7;
-    %             C7=wxsum(i-1,j);
                 C11=0;
                 for jj=1:N
                     C11=C11+condy(i-1,(jj-1)*N+j);
                 end
                 landa(i-1,j)=C11;
-    %             C11=landa(i-1,j);
                 if ssum(j)>0
                     C8=ssum(j)*C7/lambda(j);
                 else

@@ -108,14 +108,14 @@ path = strcat(cd, '/params.csv');
 %user parameters
 params = readtable(path);
 wsc = 0.95; % .95-1
-bsp = 0.45; %.05-.6
+bsp = 0.6; %.05-.6
 % esee = params.stressLevel;
 
 path = strcat(cd, '/output/simulanneal.mat');
 %if speed factors created by parameter tuning exist
 if(exist(path, 'file'))
     simulanneal = load(path);
-    simulanneal = simulanneal.speed_factor;
+    simulanneal = simulanneal.x;
     
     Sp_f(1, 1) = simulanneal(1, 1);%wsee
     Sp_f(1, 7) = simulanneal(1, 2);%fsee
@@ -133,7 +133,7 @@ STDX=zeros(L,N);
 
 % initial values
 STDX(1,3)=wsc;% ws c
-STDX(1,10)=0.01;% goal
+STDX(1,10)=0.3;% goal .01-.3
 STDX(1,15)=bsp;% mem e
 STDX(1,18)=bsp;% mem w
 STDX(1,23)=bsp;% bs p
@@ -226,53 +226,53 @@ for i=2:L
     end
 end
 
-save(strcat(cd, '/output/connection_weights.mat'), 'W');
-save(strcat(cd, '/output/state_initialization.mat'), 'state_initialization');
-save(strcat(cd, '/output/combi_func.mat'), 'O');
-save(strcat(cd, '/output/delta_t.mat'), 'dt');
-save(strcat(cd, '/output/max_t.mat'), 'max_t');
-save(strcat(cd, '/output/speed_factors.mat'), 'Sp_f')
-save(strcat(cd, '/output/statedyn.mat'), 'STDX');
-save(strcat(cd, '/output/eta.mat'), 'eta');
-save(strcat(cd, '/output/hebb.mat'), 'hebb');
-save(strcat(cd, '/output/mu.mat'), 'mu');
+% save(strcat(cd, '/output/connection_weights.mat'), 'W');
+% save(strcat(cd, '/output/state_initialization.mat'), 'state_initialization');
+% save(strcat(cd, '/output/combi_func.mat'), 'O');
+% save(strcat(cd, '/output/delta_t.mat'), 'dt');
+% save(strcat(cd, '/output/max_t.mat'), 'max_t');
+% save(strcat(cd, '/output/speed_factors.mat'), 'Sp_f')
+% save(strcat(cd, '/output/statedyn.mat'), 'STDX');
+% save(strcat(cd, '/output/eta.mat'), 'eta');
+% save(strcat(cd, '/output/hebb.mat'), 'hebb');
+% save(strcat(cd, '/output/mu.mat'), 'mu');
 
 
-% L1 = 'wsee';
-% L2 = 'ssee';
-% L3 = 'wsc';
-% L4 = 'ssc';
-% L5 = 'srsee';
-% L6 = 'srsc';
-% L7 = 'fsee';
-% L8 = 'psee';
-% L9 = 'esee';
-% L10 = 'goal';
-% L11 = 'sws';
-% L12 = 'ssb';
-% L13 = 'srsb';
-% L14 = 'esb';
-% L15 = 'meme';
-% L16 = 'ins';
-% L17 = 'psy';
-% L18 = 'memw';
-% L19 = 'ssmy';
-% L20 = 'srsmy';
-% L21 = 'esmy';
-% L22 = 'memlt';
-% L23 = 'bsp';
-% 
-% varNames = {L1,L2,L3,L4,L5,L6,L7,L8,L9,L10,L11,L12,L13,L14,L15,L16,L17,L18,L19,L20,L21,L22,L23};
+L1 = 'wsee';
+L2 = 'ssee';
+L3 = 'wsc';
+L4 = 'ssc';
+L5 = 'srsee';
+L6 = 'srsc';
+L7 = 'fsee';
+L8 = 'psee';
+L9 = 'esee';
+L10 = 'goal';
+L11 = 'sws';
+L12 = 'ssb';
+L13 = 'srsb';
+L14 = 'esb';
+L15 = 'meme';
+L16 = 'ins';
+L17 = 'psy';
+L18 = 'memw';
+L19 = 'ssmy';
+L20 = 'srsmy';
+L21 = 'esmy';
+L22 = 'memlt';
+L23 = 'bsp';
 
-% color_array = rand(N, 3);
-% figure();
-% for i = 1:N
-%     plot(time, STDX(:,i), 'color', color_array(i,:),'lineWidth',3)
-%     hold on
-% end
-% 
-% legend(varNames)
-% grid on
+varNames = {L1,L2,L3,L4,L5,L6,L7,L8,L9,L10,L11,L12,L13,L14,L15,L16,L17,L18,L19,L20,L21,L22,L23};
+
+color_array = rand(N, 3);
+figure();
+for i = 1:N
+    plot(time, STDX(:,i), 'color', color_array(i,:),'lineWidth',3)
+    hold on
+end
+
+legend(varNames)
+grid on
 
 % path = strcat(cd, '/simulation/format.csv');
 % delete(path);

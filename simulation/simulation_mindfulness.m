@@ -108,8 +108,8 @@ path = strcat(cd, '/simulation/params.csv');
 %user parameters
 params = readtable(path);
 wsc = params.stressEvent; % .95-1
-bsp = params.positiveBelief; %.05-.6
-% esee = params.stressLevel;
+bsp = params.positiveBelief; % .05-.6
+% esee = params.stressLevel; % 0-1
 
 path = strcat(cd, '/simulation/output/simulanneal.mat');
 %if speed factors created by parameter tuning exist
@@ -236,7 +236,7 @@ save(strcat(cd, '/simulation/output/eta.mat'), 'eta');
 save(strcat(cd, '/simulation/output/hebb.mat'), 'hebb');
 save(strcat(cd, '/simulation/output/mu.mat'), 'mu');
 
-save(strcat(cd, '/simulation/data/', filename, '_results'), 'STDX');
+save(strcat(cd, '/simulation/data/', filename, '_results.mat'), 'STDX');
 
 
 % L1 = 'wsee';
