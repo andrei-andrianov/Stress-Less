@@ -2,10 +2,11 @@
 .DS_Store
 
 # database file
-data.mv.db
+data/data.mv.db
 
 # simulation data
 simulation/data/*
+simulation/output/*
 simulation/params.csv
 simulation/format.csv
 
@@ -33,6 +34,7 @@ atlassian-ide-plugin.xml
 ### Java ###
 # Compiled class file
 *.class
+target/*
 
 # Log file
 *.log
